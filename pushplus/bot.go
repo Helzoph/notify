@@ -8,46 +8,46 @@ import (
 )
 
 type Bot struct {
-	Token string // 用户令牌，可直接加到请求地址后
+	Token string
 }
 
 func (b *Bot) Send(m *Message) (err error) {
 	url := "https://www.pushplus.plus/send"
 	method := "POST"
 
-	// 检查消息内容
+	// check message content
 	if err = b.checkMessage(m); err != nil {
 		return fmt.Errorf("Send:Check message-> %w", err)
 	}
 
-	// 序列化消息内容
+	// marshal message to json
 	jsonData, err := json.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("Send:Marshal message to json-> %w", err)
 	}
 
-	// 添加用户令牌到json数据中
+	// add token to json
 	jsonData = bytes.Replace(jsonData, []byte("{"), []byte(`{"token":"`+b.Token+`",`), 1)
 
-	// 创建请求
+	// send request
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("Send:Set new request-> %w", err)
 	}
 
-	// 设置请求头
+	// set request headers
 	req.Header.Add("User-Agent", "Apifox/1.0.0 (https://apifox.com)")
 	req.Header.Add("Content-Type", "application/json")
 
-	// 发送请求
+	// send request
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("Send:Send request-> %w", err)
 	}
 	defer resp.Body.Close()
 
-	// 解析响应内容
+	// decode response
 	var response Response
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
@@ -60,7 +60,8 @@ func (b *Bot) Send(m *Message) (err error) {
 	return
 }
 
-// 检查消息内容
+// checkMessage checks the content of the given message.
+// It returns an error if the content is empty.
 func (b *Bot) checkMessage(m *Message) (err error) {
 	if m.Content == "" {
 		return fmt.Errorf("checkMessage-> content is empty")
