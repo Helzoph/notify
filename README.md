@@ -20,7 +20,7 @@ if bot.Token == "" {
     panic(err)
 }
 
-err = bot.Send(&pushplus.Message{
+_, err = bot.Send(&pushplus.Message{
     Content: "Hello, World!",
 })
 if err != nil {

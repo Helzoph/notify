@@ -11,19 +11,19 @@ type Bot struct {
 	Token string
 }
 
-func (b *Bot) Send(m *Message) (err error) {
+func (b *Bot) Send(m *Message) (response *Response, err error) {
 	url := "https://www.pushplus.plus/send"
 	method := "POST"
 
 	// check message content
 	if err = b.checkMessage(m); err != nil {
-		return fmt.Errorf("Send:Check message-> %w", err)
+		return nil, fmt.Errorf("Send:Check message-> %w", err)
 	}
 
 	// marshal message to json
 	jsonData, err := json.Marshal(m)
 	if err != nil {
-		return fmt.Errorf("Send:Marshal message to json-> %w", err)
+		return nil, fmt.Errorf("Send:Marshal message to json-> %w", err)
 	}
 
 	// add token to json
@@ -33,7 +33,7 @@ func (b *Bot) Send(m *Message) (err error) {
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return fmt.Errorf("Send:Set new request-> %w", err)
+		return nil, fmt.Errorf("Send:Set new request-> %w", err)
 	}
 
 	// set request headers
@@ -43,21 +43,20 @@ func (b *Bot) Send(m *Message) (err error) {
 	// send request
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("Send:Send request-> %w", err)
+		return nil, fmt.Errorf("Send:Send request-> %w", err)
 	}
 	defer resp.Body.Close()
 
 	// decode response
-	var response Response
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
-		return fmt.Errorf("Send:Decode response-> %w", err)
+		return response, fmt.Errorf("Send:Decode response-> %w", err)
 	}
 	if response.Code != 200 {
-		return fmt.Errorf("Send:Response error-> %s", response.Msg)
+		return response, fmt.Errorf("Send:Response error-> %s", response.Msg)
 	}
 
-	return
+	return response, nil
 }
 
 // checkMessage checks the content of the given message.
